@@ -1,0 +1,8 @@
+[dev]
+34.223.248.14 ansible_user=ubuntu ansible_connection=ssh
+
+[staging]
+34.223.248.14 ansible_user=ubuntu ansible_connection=ssh
+
+[production]
+34.223.248.14 ansible_user=ubuntu ansible_connection=ssh

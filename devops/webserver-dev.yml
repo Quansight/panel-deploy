@@ -1,0 +1,13 @@
+---
+- hosts: dev
+  become_user: root
+  become: true
+  tasks:
+    - include: server-setup.yml
+      vars:
+        server_name: localhost
+        use_ssl: True
+        current_user: panel
+        secret_key: 18233b5d-f497-48cc-9aa5-
+        db_password: my4wesomep4ss
+        db_host: localhost

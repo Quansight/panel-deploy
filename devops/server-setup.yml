@@ -1,0 +1,85 @@
+---
+- name: Create User
+  user:
+    name: "{{ current_user }}"
+    groups:
+      - sudo
+      - admin
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    password: "{{ db_password | password_hash('sha512') }}"
+
+- copy: src=configs/sudoers dest=/etc/sudoers owner=root
+  become_user: root
+  become: yes
+
+- name: Update and Initial Package
+  apt:
+    name: "{{packages}}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+      - wget
+      - build-essential
+      - git-core
+      - vim
+      - nginx
+      - libevent-dev
+      - gcc
+      - p7zip-full
+      - supervisor
+
+- name: Reboot if required (for environment variables...)
+  reboot:
+    reboot_timeout: 120
+
+- copy: src=configs/sudoers dest=/etc/sudoers owner=root
+  become_user: root
+  become: yes
+
+- name: add miniconda to PATH
+  command: 'echo PATH="/home/{{current_user}}/miniconda/bin:$PATH" >> /etc/environment'
+
+- name: Reboot if required (for environment variables...)
+  reboot:
+    reboot_timeout: 120
+
+- name: copy installer
+  copy:
+    src: install_conda.sh
+    dest: /home/{{current_user}}/install_conda.sh
+    owner: "{{current_user}}"
+    mode: +x
+
+- name: install conda and setup python environment
+  command: bash install_conda.sh
+  become_user: "{{current_user}}"
+  become: yes
+  args:
+    chdir: ~/
+
+- name: download sample
+  get_url:
+    url: https://raw.githubusercontent.com/pyviz/panel/master/examples/gallery/simple/iris_kmeans.ipynb
+    dest: /home/{{current_user}}/iris_kmeans.ipynb
+    owner: "{{current_user}}"
+
+- name: Remove default nginx site
+  action: file path=/etc/nginx/site-enabled/default state=absent
+
+- name: Create Nginx config
+  template: src=configs/nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root
+
+- name: Create supervisord config
+  action: template src=configs/supervisord.conf dest=/etc/supervisor/conf.d/supervisord.conf
+
+- name: Start Supervisor
+  shell: "systemctl restart supervisor.service"
+
+- name: start nginx
+  service: name=nginx state=started
+
+- name: Restart Nginx
+  shell: "sudo service nginx restart"
