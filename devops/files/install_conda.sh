@@ -8,4 +8,4 @@ conda config --set always_yes yes --set changeps1 no
 conda update conda
 pip install --upgrade pip
 
-conda install -c pyviz panel ipython jupyter hvplot scikit-learn
+conda install -q -c pyviz panel ipython jupyter hvplot scikit-learn
