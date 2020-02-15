@@ -1,0 +1,108 @@
+---
+- name: Create User
+  user:
+    name: "{{ current_user }}"
+    groups:
+      - sudo
+      - admin
+    generate_ssh_key: yes
+    ssh_key_bits: 2048
+    ssh_key_file: .ssh/id_rsa
+    password: "{{ user_password | password_hash('sha512') }}"
+
+- name: Setup Sudoers
+  copy: src=configs/sudoers.j2 dest=/etc/sudoers owner=root
+  become_user: root
+  become: yes
+
+- name: Add Certbot
+  apt_repository:
+    repo: ppa:certbot/certbot
+
+- name: Add System Packages
+  apt:
+    name: "{{packages}}"
+    state: present
+    update_cache: yes
+  vars:
+    packages:
+      - wget
+      - build-essential
+      - git-core
+      - vim
+      - nginx
+      - libevent-dev
+      - gcc
+      - p7zip-full
+      - supervisor
+      - python-certbot-nginx
+
+- name: Setup Miniconda
+  command: 'echo PATH="/home/{{current_user}}/miniconda/bin:$PATH" >> /etc/environment'
+
+- name: Rebooting
+  reboot:
+    reboot_timeout: 120
+
+- name: Copy over conda script
+  copy:
+    src: install_conda.sh.j2
+    dest: /home/{{current_user}}/install_conda.sh
+    owner: "{{ current_user }}"
+    mode: +x
+
+- name: Check if miniconda exists
+  stat:
+    path: /home/{{current_user}}/miniconda
+  register: miniconda_rules
+
+- name: Add Conda Install Script
+  template:
+    src: files/install_conda.sh.j2
+    dest: /home/{{current_user}}/install_conda.sh
+    owner: "{{current_user}}"
+    mode: +x
+
+- name: Add Conda Environment File
+  register: environment_file
+  copy:
+    src: "{{ environment_file_path }}"
+    dest: /home/{{current_user}}/environment.yml
+    owner: "{{ current_user }}"
+
+- name: Build Conda Environment
+  command: bash install_conda.sh
+  become_user: "{{ current_user }}"
+  become: yes
+  args:
+    chdir: ~/
+
+- name: Add Notebook File
+  copy:
+    src: "{{ notebook_file_path }}"
+    dest: /home/{{current_user}}/{{notebook_name}}
+    owner: "{{current_user}}"
+
+- name: Remove Default Nginx Site
+  action: file path=/etc/nginx/site-enabled/default state=absent
+
+- name: Nginx Base Config
+  template: src=configs/nginx.conf.j2 dest=/etc/nginx/nginx.conf owner=root
+
+- name: Nginx Setup Site Available
+  template: src=configs/sites-available-setup.j2 dest=/etc/nginx/sites-available/{{server_name}} owner=root
+
+- name: Check Nginx Configuration Files
+  shell: "nginx -t"
+
+- name: Create Supervisord Config
+  action: template src=configs/supervisord.conf dest=/etc/supervisor/conf.d/supervisord.conf
+
+- name: Start Supervisor
+  shell: "systemctl restart supervisor.service"
+
+- name: Start Nginx
+  service: name=nginx state=started
+
+- name: Restart Nginx
+  shell: "systemctl restart nginx"

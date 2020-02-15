@@ -1,0 +1,16 @@
+package:
+  name: panel-deploy
+  version: 0.0.1
+
+requirements:
+  build:
+    - python
+    - setuptools
+
+  run:
+    - python
+    - ansible
+
+about:
+  home: https://github.com/makepath/panel-deploy
+  license: New BSD
