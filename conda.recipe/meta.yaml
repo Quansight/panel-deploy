@@ -10,7 +10,16 @@ requirements:
   run:
     - python
     - ansible
+    - click
+    - passlib
+    - ruamel.yaml
+
+test:
+  requires:
+    - pytest >=2.8.5
+  imports:
+    - panel_deploy
 
 about:
-  home: https://github.com/makepath/panel-deploy
-  license: New BSD
+  home: https://github.com/Quansight/panel-deploy
+  license: MIT

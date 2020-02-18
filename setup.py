@@ -7,7 +7,7 @@ setup(name='panel-deploy',
       cmdclass=versioneer.get_cmdclass(),
       description='Easily deply panel apps via ansible',
       packages=find_packages(),
-      install_requires=['ansible', 'ruamel.yaml', 'click'],
+      install_requires=['ansible', 'ruamel.yaml', 'click', 'passlib'],
       zip_safe=False,
       entry_points='''
         [console_scripts]

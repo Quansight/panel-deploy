@@ -15,24 +15,31 @@ CURRENT_DIRECTORY = os.path.normpath(os.path.abspath(os.path.dirname(__file__)))
 """
 
 @click.command()
-@click.option('--environment_file_path' )
-@click.option('--notebook_file_path' )
-@click.option('--server_public_ip' )
-@click.option('--notebook_name' )
+@click.option('--environment_file_path')
+@click.option('--notebook_file_path')
+@click.option('--server_ip')
+@click.option('--notebook_name')
 @click.option('--conda_env_name')
+@click.option('--server_name', default='example.com')
+@click.option('--use_ssl', default=False)
+@click.option('--ssl_certificate', default='')
+@click.option('--ssl_certificate_key', default='')
+@click.option('--current_user', default='panel')
+@click.option('--secret_key', default='18233b5d-f497-48cc-9aa5-')
+@click.option('--user_password', default='my4wesomep4ass')
 def run(
     environment_file_path,
     notebook_file_path,
-    server_public_ip,
+    server_ip,
     notebook_name,
     conda_env_name,
-    server_name = 'example.com',
-    use_ssl=False,
-    ssl_certificate="",
-    ssl_certificate_key="",
-    current_user="panel",
-    secret_key="18233b5d-f497-48cc-9aa5-",
-    user_password="my4wesomep4ass",
+    server_name,
+    use_ssl,
+    ssl_certificate,
+    ssl_certificate_key,
+    current_user,
+    secret_key,
+    user_password,
 ):
     yaml = YAML()
     task = {}
@@ -50,7 +57,7 @@ def run(
         "secret_key": secret_key,
         "user_password": user_password,
         "conda_env_name": conda_env_name,
-        "server_public_ip": server_public_ip,
+        "server_public_ip": server_ip,
         "notebook_name": notebook_name
     }
 
@@ -59,7 +66,7 @@ def run(
     fp.writelines('---\n')
     yaml.dump(deployment, fp)
     # Construct command using
-    cmd = f"ansible-playbook -i {server_public_ip}, -u ubuntu {fp.name}"
+    cmd = f"ansible-playbook -i {server_ip}, -u ubuntu {fp.name}"
     # Run playbook
     os.system(cmd)
     fp.close()

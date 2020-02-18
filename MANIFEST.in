@@ -1,1 +1,1 @@
-recursive-include panel_deploy/devops/ *.j2 *.yml *.py
+recursive-include panel_deploy/devops/ *.j2 *.yml
